@@ -7,7 +7,7 @@ let angle = 0;
 let isDragging = false;
 
 // Start audio (browser requires user interaction)
-audio.volume = 0;
+audio.volume = 1;
 audio.play().catch(() => {
   // Autoplay blocked until interaction
 });
