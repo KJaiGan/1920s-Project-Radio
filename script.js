@@ -52,8 +52,8 @@ document.addEventListener("mousemove", (e) => {
 
     volume = (volAngle + 135) / 270;
     if (powerOn) {
-      staticaudio.volume = volume;
-    }
+      staticaudio.volume = isPlaying ? 0 : volume;
+      if (!isPlaying && staticaudio.paused) staticaudio.play().catch(() => {});    }
     return;
   }
 
@@ -84,11 +84,12 @@ document.addEventListener("mousemove", (e) => {
     actualaudio.volume = volume * (1 - distance / tolerance);
 
   } else {
-    if (isPlaying) {
-      actualaudio.pause();
-      staticaudio.volume = volume;
-      if (staticaudio.paused) staticaudio.play().catch(() => {});
-      isPlaying = false;
-    }
+  if (isPlaying) {
+    actualaudio.pause();
+    isPlaying = false;
   }
+  // only play static when broadcast is not active
+  staticaudio.volume = volume;
+  if (powerOn && staticaudio.paused) staticaudio.play().catch(() => {});
+}
 });
