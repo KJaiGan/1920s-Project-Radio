@@ -4,32 +4,20 @@ const audio = document.getElementById("broadcast");
 
 let angle = 0;
 let isDragging = false;
-let currentFrequency = 1020; // default on load
-// Start audio (browser requires user interaction)
+
+audio.loop = true;
 audio.volume = 0;
-audio.play().catch(() => {
-  // Autoplay blocked until interaction
-});
-function updateTuning() {
-  if (Math.abs(currentFrequency - 840) <= 3) {
-    audio.volume = 1;
-  } else {
-    audio.volume = 0.05;
-  }
-}
+audio.play().catch(() => {});
+
 function unlockAudio() {
-  audio.play().catch(() => {});
-  updateTuning();
+  audio.muted = false;
   document.removeEventListener("mousedown", unlockAudio);
   document.removeEventListener("keydown", unlockAudio);
-  document.removeEventListener("touchstart", unlockAudio);
 }
 
 document.addEventListener("mousedown", unlockAudio);
 document.addEventListener("keydown", unlockAudio);
-document.addEventListener("touchstart", unlockAudio);
 
-// Mouse interaction
 dial.addEventListener("mousedown", () => {
   isDragging = true;
   dial.style.cursor = "grabbing";
@@ -47,11 +35,19 @@ document.addEventListener("mousemove", (e) => {
   angle = Math.max(-135, Math.min(135, angle));
   dial.style.transform = `rotate(${angle}deg)`;
 
-  currentFrequency = Math.round(
+  const frequency = Math.round(
     540 + ((angle + 135) / 270) * (1500 - 540)
   );
 
-  freqDisplay.textContent = currentFrequency + " kHz";
+  freqDisplay.textContent = frequency + " kHz";
 
-  updateTuning();
+  const target = 840;
+  const tolerance = 15; // kHz window
+  const distance = Math.abs(frequency - target);
+
+  if (distance <= tolerance) {
+    audio.volume = 1 - distance / tolerance;
+  } else {
+    audio.volume = 0;
+  }
 });
