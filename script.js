@@ -19,38 +19,31 @@ staticaudio.loop = true;
 staticaudio.volume = 1;
 actualaudio.volume = 1;
 
-// ----------------------
-// Dial (tuning) logic
-// ----------------------
-dial.addEventListener("mousedown", () => {
+dial.addEventListener("mousedown", (e) => {
+  e.preventDefault();        // prevent text selection
   isDragging = true;
   dial.style.cursor = "grabbing";
 });
 
-// ----------------------
-// Volume knob logic
-// ----------------------
-volumeKnob.addEventListener("mousedown", () => {
+// Volume knob drag
+volumeKnob.addEventListener("mousedown", (e) => {
+  e.preventDefault();        // prevent text selection
   isAdjustingVolume = true;
   volumeKnob.style.cursor = "grabbing";
 
-  // Power on if turning knob
   if (!powerOn) {
     powerOn = true;
     staticaudio.play().catch(() => {});
   }
 });
 
-// ----------------------
-// Mouse release logic
-// ----------------------
+// Global mouse up — stop all dragging
 document.addEventListener("mouseup", () => {
   isDragging = false;
   isAdjustingVolume = false;
   dial.style.cursor = "grab";
   volumeKnob.style.cursor = "grab";
 
-  // If volume is too low, turn off radio
   if (volume <= 0.03) {
     staticaudio.pause();
     actualaudio.pause();
