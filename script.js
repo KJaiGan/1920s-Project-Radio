@@ -4,60 +4,55 @@ const actualaudio = document.getElementById("broadcast");
 const staticaudio = document.getElementById("static");
 const volumeKnob = document.getElementById("volume-knob");
 
+// Tuning and volume state
 let angle = 0;
-let isDragging = false;
-let isPlaying = false;
-
+let isDraggingDial = false;
 let volAngle = -135;
 let isAdjustingVolume = false;
 let volume = 0;
 let powerOn = false;
+let isPlaying = false;
 
-// Initialize looping
+// Audio setup
 actualaudio.loop = true;
 staticaudio.loop = true;
 staticaudio.volume = 1;
 actualaudio.volume = 1;
 
-dial.addEventListener("mousedown", (e) => {
-  e.preventDefault();        // prevent text selection
-  isDragging = true;
-  dial.style.cursor = "grabbing";
-});
-
-// Volume knob drag
+// -----------------------
+// Volume knob handling
+// -----------------------
 volumeKnob.addEventListener("mousedown", (e) => {
-  e.preventDefault();        // prevent text selection
+  e.preventDefault();
   isAdjustingVolume = true;
   volumeKnob.style.cursor = "grabbing";
 
+  // Power on if turning knob
   if (!powerOn) {
     powerOn = true;
     staticaudio.play().catch(() => {});
   }
 });
 
-// Global mouse up — stop all dragging
 document.addEventListener("mouseup", () => {
-  isDragging = false;
+  // Stop dragging knobs/dials
+  isDraggingDial = false;
   isAdjustingVolume = false;
   dial.style.cursor = "grab";
   volumeKnob.style.cursor = "grab";
 
+  // Turn off if volume is very low
   if (volume <= 0.03) {
-    staticaudio.pause();
-    actualaudio.pause();
     powerOn = false;
     isPlaying = false;
+    actualaudio.pause();
+    staticaudio.pause();
   }
 });
 
-// ----------------------
-// Mouse move handler
-// ----------------------
 document.addEventListener("mousemove", (e) => {
 
-  // ---- Volume knob handling ----
+  // ---- Volume knob logic ----
   if (isAdjustingVolume) {
     volAngle += e.movementX * 0.8;
     volAngle = Math.max(-135, Math.min(135, volAngle));
@@ -68,27 +63,23 @@ document.addEventListener("mousemove", (e) => {
     if (!powerOn) return;
 
     if (isPlaying) {
-      // Broadcast active: scale volume, pause static
       actualaudio.volume = volume;
       staticaudio.pause();
     } else {
-      // Broadcast inactive: scale static volume
       staticaudio.volume = volume;
-      if (staticaudio.paused) staticaudio.play().catch(() => {});
+      if (staticaudio.paused && volume > 0) staticaudio.play().catch(() => {});
     }
     return; // skip dial logic while adjusting volume
   }
 
-  // ---- Dial (tuning) handling ----
-  if (!isDragging) return;
+  // ---- Dial logic ----
+  if (!isDraggingDial) return;
 
   angle += e.movementX * 0.6;
   angle = Math.max(-135, Math.min(135, angle));
   dial.style.transform = `rotate(${angle}deg)`;
 
-  const frequency = Math.round(
-    540 + ((angle + 135) / 270) * (1500 - 540)
-  );
+  const frequency = Math.round(540 + ((angle + 135) / 270) * (1500 - 540));
   freqDisplay.textContent = frequency + " kHz";
 
   if (!powerOn) return;
@@ -98,29 +89,40 @@ document.addEventListener("mousemove", (e) => {
   const distance = Math.abs(frequency - target);
 
   if (distance <= tolerance) {
-    // Broadcast frequency reached
+    // Broadcast is in tune
     if (!isPlaying) {
       staticaudio.pause();
       actualaudio.play().catch(() => {});
       isPlaying = true;
     }
     staticaudio.volume = 0;
-    // Optional: fade in broadcast near center
     actualaudio.volume = volume * (1 - distance / tolerance);
-
   } else {
-    // Outside target frequency
+    // Outside broadcast frequency
     if (isPlaying) {
       actualaudio.pause();
       isPlaying = false;
     }
 
-    // Only play static if power is on and volume > 0
     if (powerOn && volume > 0) {
       staticaudio.volume = volume;
       if (staticaudio.paused) staticaudio.play().catch(() => {});
     } else {
       staticaudio.pause();
     }
+  }
+});
+
+// -----------------------
+// Dial mousedown
+// -----------------------
+dial.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  isDraggingDial = true;
+  dial.style.cursor = "grabbing";
+
+  // Start static if power is on and nothing playing
+  if (powerOn && !isPlaying && staticaudio.paused) {
+    staticaudio.play().catch(() => {});
   }
 });
