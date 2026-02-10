@@ -38,15 +38,17 @@ document.addEventListener("mousemove", (e) => {
     volume = (volAngle + 135) / 270;
     powerOn = volume > 0.03;
 
-    if (!powerOn) {
-      actualaudio.pause();
+    if (powerOn) {
+      if (staticaudio.paused) staticaudio.play().catch(() => {});
+      staticaudio.volume = volume;
+    } else {
       staticaudio.pause();
+      actualaudio.pause();
       isPlaying = false;
     }
-    return;
+    return; 
   }
-  
-  
+
   if (!isDragging) return;
 
   angle += e.movementX * 0.6;
@@ -56,8 +58,9 @@ document.addEventListener("mousemove", (e) => {
   const frequency = Math.round(
     540 + ((angle + 135) / 270) * (1500 - 540)
   );
-
   freqDisplay.textContent = frequency + " kHz";
+
+  if (!powerOn) return;
 
   const target = 840;
   const tolerance = 15;
@@ -70,13 +73,13 @@ document.addEventListener("mousemove", (e) => {
       isPlaying = true;
     }
     staticaudio.volume = 0;
-    actualaudio.volume = 1 - distance / tolerance;
+    actualaudio.volume = volume * (1 - distance / tolerance);
 
   } else {
     if (isPlaying) {
       actualaudio.pause();
-      staticaudio.volume = 1;
-      staticaudio.play().catch(() => {});
+      staticaudio.volume = volume;
+      if (staticaudio.paused) staticaudio.play().catch(() => {});
       isPlaying = false;
     }
   }
