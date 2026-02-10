@@ -22,11 +22,26 @@ dial.addEventListener("mousedown", () => {
   dial.style.cursor = "grabbing";
 });
 
+volumeKnob.addEventListener("mousedown", () => {
+  isAdjustingVolume = true;
+  volumeKnob.style.cursor = "grabbing";
+
+  if (!powerOn) {
+    staticaudio.play().catch(() => {});
+    powerOn = true;
+  }
+});
+
 document.addEventListener("mouseup", () => {
-  isDragging = false;
-  isAdjustingVolume = false; 
-  dial.style.cursor = "grab";
+  isAdjustingVolume = false;
   volumeKnob.style.cursor = "grab";
+
+  if (volume <= 0.03) {
+    staticaudio.pause();
+    actualaudio.pause();
+    powerOn = false;
+    isPlaying = false;
+  }
 });
 
 document.addEventListener("mousemove", (e) => {
@@ -36,17 +51,10 @@ document.addEventListener("mousemove", (e) => {
     volumeKnob.style.transform = `rotate(${volAngle}deg)`;
 
     volume = (volAngle + 135) / 270;
-    powerOn = volume > 0.03;
-
     if (powerOn) {
-      if (staticaudio.paused) staticaudio.play().catch(() => {});
       staticaudio.volume = volume;
-    } else {
-      staticaudio.pause();
-      actualaudio.pause();
-      isPlaying = false;
     }
-    return; 
+    return;
   }
 
   if (!isDragging) return;
@@ -83,9 +91,4 @@ document.addEventListener("mousemove", (e) => {
       isPlaying = false;
     }
   }
-});
-
-volumeKnob.addEventListener("mousedown", () => {
-  isAdjustingVolume = true;
-  volumeKnob.style.cursor = "grabbing";
 });
