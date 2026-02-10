@@ -45,17 +45,27 @@ document.addEventListener("mouseup", () => {
 });
 
 document.addEventListener("mousemove", (e) => {
-  if (isAdjustingVolume) {
-    volAngle += e.movementX * 0.8;
-    volAngle = Math.max(-135, Math.min(135, volAngle));
-    volumeKnob.style.transform = `rotate(${volAngle}deg)`;
+if (isAdjustingVolume) {
+  volAngle += e.movementX * 0.8;
+  volAngle = Math.max(-135, Math.min(135, volAngle));
+  volumeKnob.style.transform = `rotate(${volAngle}deg)`;
 
-    volume = (volAngle + 135) / 270;
-    if (powerOn) {
-      staticaudio.volume = isPlaying ? 0 : volume;
-      if (!isPlaying && staticaudio.paused) staticaudio.play().catch(() => {});    }
-    return;
+  volume = (volAngle + 135) / 270;
+
+  if (powerOn) {
+    if (isPlaying) {
+      // Broadcast is playing: only scale its volume
+      actualaudio.volume = volume;
+      staticaudio.volume = 0;
+    } else {
+      // Broadcast is not playing: scale static volume
+      staticaudio.volume = volume;
+      if (staticaudio.paused) staticaudio.play().catch(() => {});
+    }
   }
+
+  return; // skip dial logic
+}
 
   if (!isDragging) return;
 
