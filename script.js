@@ -24,7 +24,9 @@ dial.addEventListener("mousedown", () => {
 
 document.addEventListener("mouseup", () => {
   isDragging = false;
+  isAdjustingVolume = false; 
   dial.style.cursor = "grab";
+  volumeKnob.style.cursor = "grab";
 });
 
 document.addEventListener("mousemove", (e) => {
