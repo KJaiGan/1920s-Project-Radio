@@ -10,9 +10,16 @@ audio.volume = 0;
 audio.play().catch(() => {
   // Autoplay blocked until interaction
 });
-
+function updateTuning() {
+  if (Math.abs(currentFrequency - 840) <= 3) {
+    audio.volume = 1;
+  } else {
+    audio.volume = 0.05;
+  }
+}
 function unlockAudio() {
   audio.play().catch(() => {});
+  updateTuning();
   document.removeEventListener("mousedown", unlockAudio);
   document.removeEventListener("keydown", unlockAudio);
   document.removeEventListener("touchstart", unlockAudio);
@@ -46,9 +53,5 @@ document.addEventListener("mousemove", (e) => {
 
   freqDisplay.textContent = currentFrequency + " kHz";
 
-  if (Math.abs(currentFrequency - 840) <= 3) {
-    audio.volume = 1;
-  } else {
-    audio.volume = 0.05;
-  }
+  updateTuning();
 });
