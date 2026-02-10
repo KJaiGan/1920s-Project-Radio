@@ -4,7 +4,7 @@ const audio = document.getElementById("broadcast");
 
 let angle = 0;
 let isDragging = false;
-
+let currentFrequency = 1020; // default on load
 // Start audio (browser requires user interaction)
 audio.volume = 0;
 audio.play().catch(() => {
@@ -12,7 +12,6 @@ audio.play().catch(() => {
 });
 
 function unlockAudio() {
-  audio.volume = 0.08;
   audio.play().catch(() => {});
   document.removeEventListener("mousedown", unlockAudio);
   document.removeEventListener("keydown", unlockAudio);
@@ -37,22 +36,19 @@ document.addEventListener("mouseup", () => {
 document.addEventListener("mousemove", (e) => {
   if (!isDragging) return;
 
-  // Rotate dial
   angle += e.movementX * 0.6;
   angle = Math.max(-135, Math.min(135, angle));
   dial.style.transform = `rotate(${angle}deg)`;
 
-  // Map angle → frequency (540–1500 kHz)
-  const frequency = Math.round(
+  currentFrequency = Math.round(
     540 + ((angle + 135) / 270) * (1500 - 540)
   );
 
-  freqDisplay.textContent = frequency + " kHz";
+  freqDisplay.textContent = currentFrequency + " kHz";
 
-  // Audio clarity logic
-  if (frequency === 840) {
+  if (Math.abs(currentFrequency - 840) <= 3) {
     audio.volume = 1;
   } else {
-    audio.volume = 0.08;
+    audio.volume = 0.05;
   }
 });
