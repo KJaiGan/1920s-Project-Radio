@@ -1,25 +1,27 @@
 const dial = document.getElementById("dial");
 const freqDisplay = document.getElementById("frequency");
 const audio = document.getElementById("broadcast");
-const playBtn = document.getElementById("playBtn");
 
 let angle = 0;
 let isDragging = false;
 
 // Start audio (browser requires user interaction)
-audio.volume = 1;
+audio.volume = 0;
 audio.play().catch(() => {
   // Autoplay blocked until interaction
 });
 
 function unlockAudio() {
   audio.volume = 0.08;
+  audio.play().catch(() => {});
   document.removeEventListener("mousedown", unlockAudio);
   document.removeEventListener("keydown", unlockAudio);
+  document.removeEventListener("touchstart", unlockAudio);
 }
 
 document.addEventListener("mousedown", unlockAudio);
 document.addEventListener("keydown", unlockAudio);
+document.addEventListener("touchstart", unlockAudio);
 
 // Mouse interaction
 dial.addEventListener("mousedown", () => {
