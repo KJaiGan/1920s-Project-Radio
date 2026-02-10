@@ -7,6 +7,7 @@ let isDragging = false;
 
 audio.loop = true;
 audio.volume = 0;
+audio.muted = true;
 audio.play().catch(() => {});
 
 function unlockAudio() {
