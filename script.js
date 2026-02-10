@@ -7,35 +7,50 @@ const volumeKnob = document.getElementById("volume-knob");
 let angle = 0;
 let isDragging = false;
 let isPlaying = false;
-let volAngle = -135; 
+
+let volAngle = -135;
 let isAdjustingVolume = false;
 let volume = 0;
 let powerOn = false;
 
+// Initialize looping
 actualaudio.loop = true;
 staticaudio.loop = true;
 staticaudio.volume = 1;
 actualaudio.volume = 1;
 
+// ----------------------
+// Dial (tuning) logic
+// ----------------------
 dial.addEventListener("mousedown", () => {
   isDragging = true;
   dial.style.cursor = "grabbing";
 });
 
+// ----------------------
+// Volume knob logic
+// ----------------------
 volumeKnob.addEventListener("mousedown", () => {
   isAdjustingVolume = true;
   volumeKnob.style.cursor = "grabbing";
 
+  // Power on if turning knob
   if (!powerOn) {
-    staticaudio.play().catch(() => {});
     powerOn = true;
+    staticaudio.play().catch(() => {});
   }
 });
 
+// ----------------------
+// Mouse release logic
+// ----------------------
 document.addEventListener("mouseup", () => {
+  isDragging = false;
   isAdjustingVolume = false;
+  dial.style.cursor = "grab";
   volumeKnob.style.cursor = "grab";
 
+  // If volume is too low, turn off radio
   if (volume <= 0.03) {
     staticaudio.pause();
     actualaudio.pause();
@@ -44,29 +59,34 @@ document.addEventListener("mouseup", () => {
   }
 });
 
+// ----------------------
+// Mouse move handler
+// ----------------------
 document.addEventListener("mousemove", (e) => {
-if (isAdjustingVolume) {
-  volAngle += e.movementX * 0.8;
-  volAngle = Math.max(-135, Math.min(135, volAngle));
-  volumeKnob.style.transform = `rotate(${volAngle}deg)`;
 
-  volume = (volAngle + 135) / 270;
+  // ---- Volume knob handling ----
+  if (isAdjustingVolume) {
+    volAngle += e.movementX * 0.8;
+    volAngle = Math.max(-135, Math.min(135, volAngle));
+    volumeKnob.style.transform = `rotate(${volAngle}deg)`;
 
-  if (powerOn) {
+    volume = (volAngle + 135) / 270;
+
+    if (!powerOn) return;
+
     if (isPlaying) {
-      // Broadcast is playing: only scale its volume
+      // Broadcast active: scale volume, pause static
       actualaudio.volume = volume;
-      staticaudio.volume = 0;
+      staticaudio.pause();
     } else {
-      // Broadcast is not playing: scale static volume
+      // Broadcast inactive: scale static volume
       staticaudio.volume = volume;
       if (staticaudio.paused) staticaudio.play().catch(() => {});
     }
+    return; // skip dial logic while adjusting volume
   }
 
-  return; // skip dial logic
-}
-
+  // ---- Dial (tuning) handling ----
   if (!isDragging) return;
 
   angle += e.movementX * 0.6;
@@ -85,21 +105,29 @@ if (isAdjustingVolume) {
   const distance = Math.abs(frequency - target);
 
   if (distance <= tolerance) {
+    // Broadcast frequency reached
     if (!isPlaying) {
       staticaudio.pause();
       actualaudio.play().catch(() => {});
       isPlaying = true;
     }
     staticaudio.volume = 0;
+    // Optional: fade in broadcast near center
     actualaudio.volume = volume * (1 - distance / tolerance);
 
   } else {
-  if (isPlaying) {
-    actualaudio.pause();
-    isPlaying = false;
+    // Outside target frequency
+    if (isPlaying) {
+      actualaudio.pause();
+      isPlaying = false;
+    }
+
+    // Only play static if power is on and volume > 0
+    if (powerOn && volume > 0) {
+      staticaudio.volume = volume;
+      if (staticaudio.paused) staticaudio.play().catch(() => {});
+    } else {
+      staticaudio.pause();
+    }
   }
-  // only play static when broadcast is not active
-  staticaudio.volume = volume;
-  if (powerOn && staticaudio.paused) staticaudio.play().catch(() => {});
-}
 });
